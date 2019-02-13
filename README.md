@@ -14,6 +14,10 @@ Same as above but for complex channels and MQAM.  Not much is different here,
 you mainly just split of real vs. complex at the receiver when performing
 detection
 
+## sphereDecode.m
+
+A basic sphere decoder for square channels
+
 ## estimate_channel.m
 
 Performs least squares channel estimation --- this is what the paper 
