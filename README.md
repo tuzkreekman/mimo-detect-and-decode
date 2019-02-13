@@ -2,7 +2,7 @@
 
 Some very basic code for working with MIMO
 
-## SimZFMMLReal.m
+## SimZFMLReal.m
 
 Simulates a few MIMO decoders over real channels with MPAM constellations.
 Includes full ML decoding but this won't be called if n is set higher than
