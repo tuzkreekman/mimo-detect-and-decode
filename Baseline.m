@@ -3,7 +3,7 @@ SNR = 0;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
-qamSize = 2;
+qamSize = 4;
 normAnt = 0;
 normConst = 0;
 precode = 0;
@@ -21,7 +21,7 @@ H = randn(n).*exp(-1i*2*pi*rand(n,n));
 H_known = H;
 
 % Create MIMO data
-X = PolarMIMOGenerator(n, LEN, K, R, qamSize, qamTab, normAnt, normConst, precode, H_known);
+X = PolarMimoGenerator(n, K, R, qamSize, normAnt, normConst, precode, H_known);
 
 % Receive antenna noise - AWGN
 noiseVal = 10^(-SNR/10);

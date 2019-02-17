@@ -1,4 +1,4 @@
-function PolarMIMOGenerator(n, K, R, qamSize, normAnt, normConst, precode, H)
+function X = PolarMIMOGenerator(n, K, R, qamSize, normAnt, normConst, precode, H)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate polar coding of bits in MIMO systems.
 % Optionally can apply SVD precoding based on known channel matrix
