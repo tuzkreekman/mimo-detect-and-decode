@@ -1,4 +1,4 @@
-function zf = LinearMIMODecoder(n, Y, qamSize, qamTab, normAnt, normConst)
+function zf = LinearMIMODecoder(n, Y, qamSize, qamTab, normAnt, normConst, Hest)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate ZF decoding in MIMO systems.
 %
@@ -11,6 +11,7 @@ function zf = LinearMIMODecoder(n, Y, qamSize, qamTab, normAnt, normConst)
 %   normAnt - a binary flag for normalizing the Tx power by 1/sqrt(n).
 %   normConst - a binary flag for normalizing the Tx constellation to have
 %               an average unit power.
+%   Hest - the channel estimate
 %
 %   Output - performance plot.
 %
@@ -26,7 +27,7 @@ if (normAnt)
     antennaNorm = 1/sqrt(n);
 end
 
-wzf = pinv(H)*Y; % ZF
+wzf = pinv(Hest)*Y; % ZF
         
 zf = qamDetector(wzf, qamSize, antennaNorm, normedEnergy);
 

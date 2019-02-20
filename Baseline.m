@@ -21,7 +21,7 @@ H = randn(n).*exp(-1i*2*pi*rand(n,n));
 H_known = H;
 
 % Create MIMO data
-X = PolarMIMOGenerator(n, LEN, K, R, qamSize, qamTab, normAnt, normConst, precode, H_known);
+X = PolarMIMOGenerator(n, LEN, K, R, qamSize, qamTab, precode, H_known);
 
 % Receive antenna noise - AWGN
 noiseVal = 10^(-SNR/10);
@@ -30,8 +30,10 @@ noiseVec = sqrt(noiseVal)*randn(n,1);
 % Apply channel
 Y = H*X + noiseVec;
 
+Hest = ChannelEstimate(rxPilots, txPilots);
+
 % MIMO Detect
-Yhat = LinearMIMODecoder(n, Y, qamSize, qamTab, normAnt, normConst)
+Yhat = LinearMIMODecoder(n, Y, qamSize, qamTab, normAnt, normConst, Hest);
 
 % Polar Decode
 Xhat = PolarDecoder(n, LEN, K, R, Yhat)
