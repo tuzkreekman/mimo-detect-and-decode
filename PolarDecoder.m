@@ -1,4 +1,4 @@
-function dec = PolarDecoder(n, LEN, K, SNR, Y)
+function dec = PolarDecoder(n, LEN, K, N, SNR, Y)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate polar decoding of bits in MIMO systems.
 %
@@ -15,14 +15,15 @@ function dec = PolarDecoder(n, LEN, K, SNR, Y)
 %   Example: PolarDecoder(4,20,16,.5,Y)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dec = zeros(n, K, LEN);
+data = reshape(Y, n, LEN, N);
 
-for (kk = 1 : LEN)
-    for (i = 1 : n)
-        dec(i,:,kk) = pdecode(Y(data(i,:,kk), 'AWGN', SNR);
-    end
+dec = zeros(n, LEN, K);
 
+for (i=1:n)
+    dec(i,:,:) = pdecode(squeeze(data(i,:,:)), 'AWGN', SNR);
 end
+
+dec = transpose(dec, [1,3,2]);
 
 end
 

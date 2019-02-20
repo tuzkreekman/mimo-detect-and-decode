@@ -1,4 +1,4 @@
-function zf = LinearMIMODecoder(n, Y, qamSize, qamTab, normAnt, normConst, Hest)
+function Yhat = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate ZF decoding in MIMO systems.
 %
@@ -20,7 +20,10 @@ function zf = LinearMIMODecoder(n, Y, qamSize, qamTab, normAnt, normConst, Hest)
 
 % Read constallation table
 tab = qamTab.table;
+qamSize = qamTab.qamSize;
 normedEnergy = qamTab.normFactor;
+
+Yhat = zeros(n, newLen, qamTab.qamBitSize);
 
 antennaNorm = 1;
 if (normAnt)
@@ -30,13 +33,20 @@ end
 wzf = pinv(Hest)*Y; % ZF
         
 % WZF qam detector - closest qam
-zf = qamDetector(wzf, qamSize, antennaNorm, normedEnergy);
+for (i=1:n)
+    zf(i,:) = qamDetector(squeeze(wzf(i,:)), qamSize, antennaNorm, normedEnergy);
+end
 
 m = sqrt(qamSize);
 assert( m == round(m) );
 
 % Reverse the QAM table transforms
-Yhat = qamDecoder(zf, qamTab);
+qam = qamDecoder(zf, qamTab) -1;
+
+% turn index to binary
+for (i = 1:n)
+    Yhat(i,:,:) = de2bi(squeeze(qam(i,:,:)));
+end
 
 end
 
