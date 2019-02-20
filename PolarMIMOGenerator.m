@@ -1,4 +1,4 @@
-function X = PolarMIMOGenerator(n, LEN, N, K, R, qamBitSize, qamTab, precode, H)
+function output = PolarMIMOGenerator(n, LEN, N, K, R, qamBitSize, qamTab, precode, H)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate polar coding of bits in MIMO systems.
 % Optionally can apply SVD precoding based on known channel matrix
@@ -25,6 +25,7 @@ qamTable = qamTab.table;
 
 data = zeros(n, K, LEN); % antennas, bits, nMessages
 enc = zeros(n, N, LEN); %antennas, polarized bits, nMessages
+output = zeros(n, LEN*N/qamBitSize); 
 
 if (precode)
     [U,D,V] = svd(H);
@@ -41,9 +42,11 @@ end
 
 enc = reshape(enc, n, LEN*N/qamBitSize, qamBitSize);
 
-collapsed = bi2de(enc);
-
-output = qamTable(collapsed);
+for (k = 1:n)
+    msg = squeeze(enc(k,:,:)); 
+    indices = bi2de(msg)+1;
+    output(k,:) = qamTable(indices);
+end
 
 if (precode)
     output = V.*output;
