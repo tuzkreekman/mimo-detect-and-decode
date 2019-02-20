@@ -1,4 +1,4 @@
-# MIMO Decoding
+# Tom's code - MIMO Decoding
 
 Some very basic code for working with MIMO
 
