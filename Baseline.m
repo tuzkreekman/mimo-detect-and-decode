@@ -37,9 +37,13 @@ noiseVal = 10^(-SNR/10);
 noiseVec = sqrt(noiseVal)*randn(n,1);
         
 % Apply channel
-Y = H*X + noiseVec;
+%Y = H*X + noiseVec;
 
-Hest = ChannelEstimate(rxPilots, txPilots);
+%Hest = ChannelEstimate(rxPilots, txPilots);
+
+Hest=H;
+
+Y=X;
 
 % MIMO Detect
 Yhat = LinearMIMODecoder(n, Y, qamSize, qamTab, normAnt, normConst, Hest);

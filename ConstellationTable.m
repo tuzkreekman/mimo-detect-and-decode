@@ -19,6 +19,8 @@ tab = twoSided/normFactor;
 qam.table = tab;
 qam.normFactor = normFactor;
 qam.avgEnergy = avgEnergy;
+qam.qamSize = qamSize;
+qam.qamBitSize = m;
 
 end
 

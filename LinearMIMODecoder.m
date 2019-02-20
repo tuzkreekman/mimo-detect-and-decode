@@ -29,13 +29,29 @@ end
 
 wzf = pinv(Hest)*Y; % ZF
         
+% WZF qam detector - closest qam
 zf = qamDetector(wzf, qamSize, antennaNorm, normedEnergy);
 
-Yhat = find(tab, zf);
+m = sqrt(qamSize);
+assert( m == round(m) );
+
+% Reverse the QAM table transforms
+Yhat = qamDecoder(zf, qamTab);
 
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-----------------------------------------------------------------%
+function lut = qamDecoder(Y, qamTab)
+% Reverse the QAM table transforms
+% Y - the MIMO array
+% qamTab - the table to use to decode, in form of 
+%          ConstellationTable's struct (only use normFactor, qbs rn)
+m = qamTab.qamBitSize;
+lut = Y*qamTab.normFactor;
+lut = lut +(m+1) + 1j*(m+1);
+lut = real(lut)/2 + m*imag(lut)/2 -m;
+end
 %-----------------------------------------------------------------%
 function r = qamDetector(y, qamSize, antennaNorm, constNorm)
     pamSize = sqrt(qamSize);
