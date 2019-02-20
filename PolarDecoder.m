@@ -1,4 +1,4 @@
-function dec = PolarDecoder(n, LEN, K, R, Y)
+function dec = PolarDecoder(n, LEN, K, SNR, Y)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate polar decoding of bits in MIMO systems.
 %
@@ -17,12 +17,9 @@ function dec = PolarDecoder(n, LEN, K, R, Y)
 
 dec = zeros(n, K, LEN);
 
-% TODO find linear polar decoder 
-LLR = 0;
-
 for (kk = 1 : LEN)
     for (i = 1 : n)
-        dec(i,:,kk) = nrPolarDecode(LLR, Y(data(i,:,kk), K/R, 1);	
+        dec(i,:,kk) = pdecode(Y(data(i,:,kk), 'AWGN', SNR);
     end
 
 end

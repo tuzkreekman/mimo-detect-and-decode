@@ -77,6 +77,7 @@ for i = 1:size(X,1),
         X(i,j) = varargin{j}(ixVect(j));
     end
 end
+end
 
 % SOURCE: Tom
 function X = ind2subVect(siz,ndx)
@@ -117,4 +118,6 @@ ndx = ndx - 1;
 for i = n:-1:1,
   X(i) = floor(ndx/k(i))+1;      % replaced "varargout{i}" with "X(i)"
   ndx = rem(ndx,k(i));
+end
+
 end
