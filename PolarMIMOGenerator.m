@@ -1,10 +1,11 @@
-function PolarMIMOGenerator(n, K, R, qamSize, qamTab, precode, H)
+function X = PolarMIMOGenerator(n, LEN, K, R, qamSize, qamTab, precode, H)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate polar coding of bits in MIMO systems.
 % Optionally can apply SVD precoding based on known channel matrix
 %
 % Inputs:
 %   n - number of antennas.
+%   LEN - number of symbols per antenna
 %   K - number of bits per symbol per antenna
 %   R - polar coding rate
 %       e.g. K=16, R=.5 -> 32 bits output of polar codes
@@ -18,8 +19,6 @@ function PolarMIMOGenerator(n, K, R, qamSize, qamTab, precode, H)
 %
 %   Example: PolarMIMOGenerator(4,4,1,1,1,ones(4))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-LEN = 20;
 
 % Create constallation table
 qamTable = qamTab.table;
