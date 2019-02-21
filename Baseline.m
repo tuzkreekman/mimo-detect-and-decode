@@ -1,7 +1,7 @@
-LEN = 20; % how many K-bit length messages we will send (per tx/rx)
-SNR = 300;
+LEN = 2000; % how many K-bit length messages we will send (per tx/rx)
+SNR = 1;
 n = 2; % number of tx and rx antennas
-K = 16; % bits per msg
+K = 4; % bits per msg
 R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
 qamBitSize = 1;
@@ -38,25 +38,34 @@ B = MIMOGenerator(n, LEN, K);
 
 % Receive antenna noise - AWGN
 noiseVal = 10^(-SNR/10)*K/N;
-noiseVec = sqrt(noiseVal)*randn(n,1);
+noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
         
 % Apply channel
-Y = H*X + noiseVec;
+Y = H*X + noiseVec; % Nonfading gaussian channel
 
 %Hest = ChannelEstimate(rxPilots, txPilots);
 
 Hest=H; % perfect CSI
 
 % MIMO Detect
-[Yhat,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
+[Yhat,wzf,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
 %Yhat - original polar bits it guessed
+%wzf - equalized qam
 %zf - recentered qam
 
-% Polar Decode
-Bhat = PolarDecoder(n, LEN, K, N, SNR, zf);
+% Linear Polar Decode - uses centered qams
+Bhat1 = PolarDecoder(n, LEN, K, N, SNR,  zf);
+% Iterative Polar Decode - uses equalized qams
+Bhat2 = PolarDecoder(n, LEN, K, N, SNR, wzf);
 
 
-disp('How off the post-encoded bits and pre-decoded bits are');
-disp(sum(sum(sum(abs(enc-Yhat)))));
-disp('How off the pre coded bits and post decoded bits are');
-disp(sum(sum(sum(abs(B-Bhat)))));
+disp('MIMO Decode only BER');
+disp(sum(sum(sum(abs(enc-Yhat))))/(newLen*n));
+disp('BER - Linear');
+disp(sum(sum(sum(abs(B-Bhat1))))/(K*LEN*n));
+disp('BER - Iterative');
+disp(sum(sum(sum(abs(B-Bhat2))))/(K*LEN*n));
+
+
+
+

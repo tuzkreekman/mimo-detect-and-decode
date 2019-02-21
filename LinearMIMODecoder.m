@@ -1,4 +1,4 @@
-function [Yhat,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt)
+function [Yhat,wzf,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate ZF decoding in MIMO systems.
 %
@@ -13,6 +13,7 @@ function [Yhat,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt)
 %
 % Outputs:
 %   Yhat - the demodulated polar coded bits
+%   wzf - equalized qam (no detection)
 %   zf - ZF detected modulated symbols 
 %
 %   Example: LinearMIMODecoder(4,20,16,Y,table,Hest,1)
