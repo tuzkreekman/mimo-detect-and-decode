@@ -8,7 +8,7 @@ function dec = PolarDecoder(n, LEN, K, N, SNR, Y)
 %   K - number of bits per symbol per antenna
 %   R - polar coding rate
 %       e.g. K=16, R=.5 -> 32 bits output of polar codes
-%   Y - data to decode
+%   Y - modulated data to decode
 %
 %   Output - MIMO signal after QAM detection linearly
 %

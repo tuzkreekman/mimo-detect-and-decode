@@ -4,6 +4,7 @@ function [output, newLen, enc, enc_old] = ApplyPolarQAM(data, n, LEN, N, K, R, q
 % Optionally can apply SVD precoding based on known channel matrix
 %
 % Inputs:
+%   data - the generated MIMO messages
 %   n - number of antennas.
 %   LEN - number of symbols per antenna
 %   N - number of bits after encoding per symbol
@@ -15,9 +16,11 @@ function [output, newLen, enc, enc_old] = ApplyPolarQAM(data, n, LEN, N, K, R, q
 %   precode - a binary flag for SVD precoding
 %   H - the known channel, if available, used for precoding
 %
-%   Output - MIMO signal about to be transmitted
-%
-%   Example: PolarMIMOGenerator(4,4,1,1,1,ones(4))
+% Outputs:
+%   output - polarized modulated MIMO
+%   newLen - number of symbols per antenna after polarizing and modulating
+%   enc - polar encoded bits grouped into qamBitSize groups
+%   enc_old - polar encoded bits grouped into N size groups
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Create constallation table

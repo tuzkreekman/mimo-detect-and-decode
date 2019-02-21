@@ -1,5 +1,5 @@
 LEN = 20; % how many K-bit length messages we will send (per tx/rx)
-SNR = 0;
+SNR = 300;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
@@ -37,23 +37,24 @@ B = MIMOGenerator(n, LEN, K);
 
 
 % Receive antenna noise - AWGN
-noiseVal = 10^(-SNR/10);
+noiseVal = 10^(-SNR/10)*K/N;
 noiseVec = sqrt(noiseVal)*randn(n,1);
         
 % Apply channel
-%Y = H*X + noiseVec;
+Y = H*X + noiseVec;
 
 %Hest = ChannelEstimate(rxPilots, txPilots);
 
-Hest=eye(n);
-
-Y=X;
+Hest=H; % perfect CSI
 
 % MIMO Detect
-Yhat = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
+[Yhat,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
+%Yhat - original polar bits it guessed
+%zf - recentered qam
 
 % Polar Decode
-Bhat = PolarDecoder(n, LEN, K, N, SNR, Yhat);
+Bhat = PolarDecoder(n, LEN, K, N, SNR, zf);
+
 
 disp('How off the post-encoded bits and pre-decoded bits are');
 disp(sum(sum(sum(abs(enc-Yhat)))));
