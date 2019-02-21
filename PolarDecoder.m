@@ -19,11 +19,12 @@ data = reshape(Y, n, LEN, N);
 
 dec = zeros(n, LEN, K);
 
-for (i=1:n)
-    dec(i,:,:) = pdecode(squeeze(data(i,:,:)), 'AWGN', SNR);
-end
+for (kk = 1 : LEN)
+    for (i = 1 : n)
+        dec(i,kk,:) = pdecode(data(i,kk,:), 'AWGN', SNR);
+    end
 
-dec = transpose(dec, [1,3,2]);
+end
 
 end
 

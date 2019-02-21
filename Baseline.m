@@ -30,7 +30,11 @@ H = randn(n).*exp(-1i*2*pi*rand(n,n));
 H_known = H;
 
 % Create MIMO data
-[X, newLen] = PolarMIMOGenerator(n, LEN, N, K, R, qamBitSize, qamTab, precode, H_known);
+B = MIMOGenerator(n, LEN, K);
+
+% Polar encode and modulate
+[X, newLen, enc] = ApplyPolarQAM(B, n, LEN, N, K, R, qamBitSize, qamTab, precode, H_known);
+
 
 % Receive antenna noise - AWGN
 noiseVal = 10^(-SNR/10);
@@ -49,10 +53,9 @@ Y=X;
 Yhat = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
 
 % Polar Decode
-Xhat = PolarDecoder(n, LEN, K, N, 1e6, Yhat)
+Bhat = PolarDecoder(n, LEN, K, N, SNR, Yhat);
 
-% Compare
-figure(1)
-plot(X)
-plot(Xhat)
-
+disp('How off the post-encoded bits and pre-decoded bits are');
+disp(sum(sum(sum(enc-Yhat))));
+disp('How off the pre coded bits and post decoded bits are');
+disp(sum(sum(sum(B-Bhat))))
