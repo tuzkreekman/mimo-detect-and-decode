@@ -4,7 +4,7 @@ n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
-qamBitSize = 2;
+qamBitSize = 1;
 qamSize = 2^qamBitSize;
 normAnt = 0;
 normConst = 0;
@@ -33,7 +33,7 @@ H_known = H;
 B = MIMOGenerator(n, LEN, K);
 
 % Polar encode and modulate
-[X, newLen, enc] = ApplyPolarQAM(B, n, LEN, N, K, R, qamBitSize, qamTab, precode, H_known);
+[X, newLen, enc, enc_old] = ApplyPolarQAM(B, n, LEN, N, K, R, qamBitSize, qamTab, precode, H_known);
 
 
 % Receive antenna noise - AWGN
@@ -56,6 +56,6 @@ Yhat = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
 Bhat = PolarDecoder(n, LEN, K, N, SNR, Yhat);
 
 disp('How off the post-encoded bits and pre-decoded bits are');
-disp(sum(sum(sum(enc-Yhat))));
+disp(sum(sum(sum(abs(enc-Yhat)))));
 disp('How off the pre coded bits and post decoded bits are');
-disp(sum(sum(sum(B-Bhat))))
+disp(sum(sum(sum(abs(B-Bhat)))));

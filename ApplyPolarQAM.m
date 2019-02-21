@@ -1,4 +1,4 @@
-function [output, newLen, enc] = ApplyPolarQAM(data, n, LEN, N, K, R, qamBitSize, qamTab, precode, H)
+function [output, newLen, enc, enc_old] = ApplyPolarQAM(data, n, LEN, N, K, R, qamBitSize, qamTab, precode, H)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulate polar coding of bits in MIMO systems.
 % Optionally can apply SVD precoding based on known channel matrix
@@ -42,10 +42,11 @@ for (kk = 1 : LEN)
 end
 
 % reorder each chunk of N bits so that we have qamBitSize chunks instead
+enc_old = enc;
 enc = reshape(enc, n, newLen, qamBitSize);
 
 for (k = 1:n)
-    msg = squeeze(enc(k,:,:)); % [1,newLen,qamBitSize] -> [newLen, qamBitSize]
+    msg = reshape(enc(k,:,:), newLen, qamBitSize); % [1,newLen,qamBitSize] -> [newLen, qamBitSize]
     indices = bi2de(msg)+1; % convert to decimal index of table, +1 since matlab is 1 indexed
     output(k,:) = qamTable(indices); % use encoded bits on table to get moduated symbols
 end

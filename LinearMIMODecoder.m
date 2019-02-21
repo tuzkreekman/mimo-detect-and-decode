@@ -37,9 +37,6 @@ for (i=1:n)
     zf(i,:) = qamDetector(squeeze(wzf(i,:)), qamSize, antennaNorm, normedEnergy);
 end
 
-m = sqrt(qamSize);
-assert( m == round(m) );
-
 % Reverse the QAM table transforms
 qam = qamDecoder(zf, qamTab) -1;
 
@@ -58,18 +55,26 @@ function lut = qamDecoder(Y, qamTab)
 % qamTab - the table to use to decode, in form of 
 %          ConstellationTable's struct (only use normFactor, qbs rn)
 m = qamTab.qamBitSize;
-lut = Y*qamTab.normFactor;
-lut = lut +(m+1) + 1j*(m+1);
-lut = real(lut)/2 + m*imag(lut)/2 -m;
+if (m==1)
+  lut = (Y>0)+1;
+else
+  lut = Y*qamTab.normFactor;
+  lut = lut +(m+1) + 1j*(m+1);
+  lut = real(lut)/2 + m*imag(lut)/2 -m;
+end
 end
 %-----------------------------------------------------------------%
 function r = qamDetector(y, qamSize, antennaNorm, constNorm)
+ if (qamSize==2)
+    r = pamDetector( y, qamSize, antennaNorm, constNorm);
+  else
     pamSize = sqrt(qamSize);
     
     re = pamDetector( real(y), pamSize, antennaNorm, constNorm );
     im = pamDetector( imag(y), pamSize, antennaNorm, constNorm );
     
     r = re + 1i*im;
+  end
 end
 
 %-----------------------------------------------------------------%

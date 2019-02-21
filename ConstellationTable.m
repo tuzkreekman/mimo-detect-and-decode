@@ -2,12 +2,20 @@
 function qam = ConstellationTable(qamSize, normConst)
 % Generate M-QAM constellation and return the average energy of the
 % constellation
-m = sqrt(qamSize);
-assert( m == round(m) );
+if (qamSize==2) 
+	m = 1;
+	pamSize = qamSize;
+	oneSided = 2*[1:pamSize/2]-1;
+	twoSided = [-fliplr(oneSided) oneSided];
+else
+	m = sqrt(qamSize);
+	assert( m == round(m) );
 
-pam = 2*[1:m]-m-1;
-prod = cartprod(pam, pam);
-twoSided = (prod(:,1) + prod(:,2)*1i).';
+	pam = 2*[1:m]-m-1;
+	prod = cartprod(pam, pam);
+	twoSided = (prod(:,1) + prod(:,2)*1i).';
+end
+
 avgEnergy = twoSided*twoSided'/length(twoSided);
 normFactor = 1;
 if (normConst)
