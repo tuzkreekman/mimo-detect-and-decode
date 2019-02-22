@@ -1,5 +1,6 @@
-LEN = 2000; % how many K-bit length messages we will send (per tx/rx)
-SNR = 1;
+LEN = 10; % how many K-bit length messages we will send (per tx/rx)
+ITERS = 2000;
+snr = 0:10;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
@@ -13,8 +14,35 @@ precode = 0;
 addpath('./samples/polar');
 addpath('./samples/polar/functions');
 
+linearBER    = zeros(11,ITERS);
+iterativeBER = zeros(11,ITERS);
 
-initPC(N,K,'AWGN',SNR);
+for (SNR=snr)
+  for (i=1:ITERS)
+    [ber1,ber2] = GetBER(LEN,SNR,n,K,R,N,qamBitSize,qamSize,normAnt,normConst,precode);
+    linearBER(SNR+1,i) = ber1;
+    iterativeBER(SNR+1,i) = ber2;
+  end
+end
+
+linearBER = mean(linearBER,2);
+iterativeBER = mean(iterativeBER,2);
+
+fig = figure();
+hold on;
+plot(snr,linearBER,'DisplayName','Linear');
+plot(snr,iterativeBER,'DisplayName','Iterative');
+title('BER vs SNR');
+ylabel('BER');
+xlabel('SNR');
+set(gca,'YScale','log');
+legend();
+hold off;
+
+saveas(fig,'BER.png');
+
+function [linearBER, iterativeBER] = GetBER(LEN,SNR,n,K,R,N,qamBitSize,qamSize,normAnt,normConst,precode)
+initPC(N,K,'AWGN',0); % changd snr
 %SNR: Default: 0dB;  := Eb/N0,  where (K*Eb/N) is the energy used during BPSK modulation of coded-bits)
 
 % Create constallation table
@@ -37,7 +65,7 @@ B = MIMOGenerator(n, LEN, K);
 
 
 % Receive antenna noise - AWGN
-noiseVal = 10^(-SNR/10)*K/N;
+noiseVal = 10^(-SNR/10);% CHANGED *K/N;
 noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
         
 % Apply channel
@@ -59,13 +87,8 @@ Bhat1 = PolarDecoder(n, LEN, K, N, SNR,  zf);
 Bhat2 = PolarDecoder(n, LEN, K, N, SNR, wzf);
 
 
-disp('MIMO Decode only BER');
-disp(sum(sum(sum(abs(enc-Yhat))))/(newLen*n));
-disp('BER - Linear');
-disp(sum(sum(sum(abs(B-Bhat1))))/(K*LEN*n));
-disp('BER - Iterative');
-disp(sum(sum(sum(abs(B-Bhat2))))/(K*LEN*n));
+linearBER = sum(sum(sum(abs(B-Bhat1))))/(K*LEN*n);
+iterativeBER = sum(sum(sum(abs(B-Bhat2))))/(K*LEN*n);
 
-
-
+end
 
