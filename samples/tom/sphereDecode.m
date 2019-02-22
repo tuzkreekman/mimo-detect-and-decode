@@ -26,9 +26,7 @@ state.depth = n;
 state.best_l2 = 1e15;
 state.best_vec = [0; 0; 0; 0];
 state.const = const;
-state = sphereRecurse( state );
-state.best_vec;
-state.best_l2;
+state = sphereRecurse( state, 0 );
 
 x_hat = state.best_vec;
 e = state.best_l2;
@@ -36,18 +34,17 @@ if e == 1e15
     x_hat = zeros(1,n);
 end
 
-function state = sphereRecurse( state )
+function state = sphereRecurse( state, dist )
     ii = state.depth;
     for jj = 1:length(state.const)
         state.vec(ii) = state.const(jj);
-        l2_part = (state.qy(ii) - state.r(ii,:)*state.vec).^2;
-        
+        l2_part = (state.qy(ii) - state.r(ii,:)*state.vec).^2 + dist;
         %Only recurse if we are withing the decoding bound
         if l2_part < state.R 
             if ii > 1
                 %If we are not yet at the root, then recurse
                 state.depth = ii - 1;
-                state = sphereRecurse( state );
+                state = sphereRecurse( state, l2_part );
             else
                 %If we are at a root then see if we've found the best point
                 if l2_part < state.best_l2
