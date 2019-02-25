@@ -44,7 +44,7 @@ noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
 Y = H*X + noiseVec; % Nonfading gaussian channel
 
 %Hest = ChannelEstimate(rxPilots, txPilots);
-
+%Hest = (H*X + noiseVec)/X;
 Hest=H; % perfect CSI
 
 % MIMO Detect
