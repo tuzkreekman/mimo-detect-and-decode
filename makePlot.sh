@@ -1,56 +1,28 @@
-#!/bin/bash
+#!/bin/bash -l
 
-#
 # set the name of the job; this will appear in the job listing
-#$ -N PlotBERBaseline
-#
+#SBATCH --job-name=PlotBERBaseline
 
-#
 # set the maximum memory usage (per slot)
-#$ -l mem_free=2G
-#
-# on other clusters this memory resource may have a different name
+#SBATCH --mem=2G
 
-#
-# set the number of slots, replace '1' with a larger number if needed
-#$ -pe shm 1
-#
-# on other clusters this pe may have a different name
+##SBATCH --partition=gpu
+##SBATCH --gres=gpu:1
 
-#
-# set the maximum run time, hh:mm:ss, default is 48hrs on FarmShare
-#$ -l h_rt=12:00:00
-#
+#SBATCH -o test."%j".out
+#SBATCH -e test."%j".err
+# Default in slurm
+#SBATCH --mail-user $USER@stanford.edu
+#SBATCH --mail-type=ALL
+# Request 5 hours run time
+#SBATCH -t 5:0:0
+#SBATCH -p normal
 
-#
-# send mail when job ends or aborts
-#$ -m ea
-#
-
-#
-# specify an email address
-#$ -M $USER@stanford.edu
-#
-
-# check for errors in the job submission options
-#$ -w e
-#
-
-##We strongly discourage users from exporting their environment onto the compute node. 
-##Doing this pretty much means the job is non-reproductible, 
-##because all the required settings are not captured in the job script.
-##
-## pass the current environment variables
-##$ -V
-##
-
-# join the stdout and stderr streams into one file
-#$ -j y
-#
 
 echo "Start test"
+module load matlab 
 
-matlab -nodesktop -r "run('PlotBaseline.m'); exit(0);"
+matlab -nodesktop -r "run('PlotPerfectBaseline.m'); run('PlotEstimateBaseline.m'); exit(0);"
 
 echo "End test"
 
