@@ -20,13 +20,17 @@ noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
         
 % Apply channel
 Y = H*X + noiseVec; % Nonfading gaussian channel
-Xhat = Y/H
+
+%print('Dim of Y is')
+size(Y)
+size(H)
+Xhat = pinv(H)*Y;
 k=1;
 
 for i=1:n
     for j=1:newLen
         x(k) = real(Y(i,j));
-        x_hat(k) = imag(X_hat(i,j));
+        x_hat(k) = imag(Xhat(i,j));
         z(k) = i;
         k=k+1;
     end
