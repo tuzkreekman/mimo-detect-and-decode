@@ -1,5 +1,5 @@
 LEN = 4; % how many K-bit length messages we will send (per tx/rx)
-ITERS = 2;
+ITERS = 1000;
 snr = 0:10;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
@@ -129,7 +129,7 @@ Y = H*X + noiseVec; % Nonfading gaussian channel
 %disp('part 2 is')
 %disp(inv((X(:,1))'*(X(:,1))))
 %disp('final is')
-Hest = ((Y(:,1))'.*(X(:,1)))*(inv((X(:,1))'*(X(:,1))))
+Hest = ((Y(:,1))'.*(X(:,1)))*(inv((X(:,1))'*(X(:,1))));
 % MIMO Detect
 [Yhat,wzf,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
 %Yhat - original polar bits it guessed
