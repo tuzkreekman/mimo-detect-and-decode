@@ -13,38 +13,39 @@ precode = 0;
 TRAIN_SIZE = 200; 
 TEST_SIZE = 20;
 
-training.B = zeros(n, K, TRAIN_SIZE);
-training.Y = zeros(n, N/qamBitSize, 1, TRAIN_SIZE);
+training.B = zeros(n*K, TRAIN_SIZE);
+training.Y = zeros(n*(2*N/qamBitSize + n), TRAIN_SIZE);
 
-testing.B = zeros(n, K, TEST_SIZE);
-testing.Y = zeros(n, N/qamBitSize, 1, TEST_SIZE);
+testing.B = zeros(n*K, TEST_SIZE);
+testing.Y = zeros(n*(2*N/qamBitSize + n), TEST_SIZE);
 
 addpath('./samples/polar');
 addpath('./samples/polar/functions');
 
 layers = [
-    imageInputLayer([n N/qamBitSize 1])
+    %imageInputLayer([n N/qamBitSize 1])
+    sequenceInputLayer(n*(2*N/qamBitSize + n))
     
     fullyConnectedLayer(512)
     reluLayer
     fullyConnectedLayer(256)
-    batchNormalizationLayer
+    %batchNormalizationLayer
     reluLayer
     fullyConnectedLayer(128)
-    batchNormalizationLayer
+    %batchNormalizationLayer
     reluLayer
     fullyConnectedLayer(64)
-    batchNormalizationLayer
+    %batchNormalizationLayer
     reluLayer
     fullyConnectedLayer(32)
-    batchNormalizationLayer
+    %batchNormalizationLayer
     reluLayer
     fullyConnectedLayer(16)
-    batchNormalizationLayer
+    %batchNormalizationLayer
     reluLayer
     fullyConnectedLayer(K)
     softmaxLayer %should be sigmoid? 
-    pixelClassificationLayer  %maybe??
+    classificationLayer  %maybe??
 ];
 
 options =  trainingOptions('adam', ...
@@ -92,8 +93,10 @@ for (i=1:TRAIN_SIZE)
   % Apply channel
   Y = Hest*X + noiseVec; % Nonfading gaussian channel
 
-  training.Y(:,:,1,i) = Y;
-  training.B(:,:,i) = B; 
+  Y = [real(Y); imag(Y)];
+
+  training.Y(:,i) = reshape([reshape(Y,[],1); reshape(Hest,[],1)], [], 1);
+  training.B(:,i) = reshape(B, [], 1);
 end
 
 % Create Test data
@@ -112,14 +115,21 @@ for (i=1:TEST_SIZE)
   % Apply channel
   Y = H*X + noiseVec; % Nonfading gaussian channel
 
-  testing.Y(:,:,1,i) = Y;
-  testing.B(:,:,i) = B;
+  Y = [real(Y); imag(Y)];
+
+  testing.Y(:,i) = reshape([reshape(Y, [], 1); reshape(Hest, [], 1)], [], 1);
+  testing.B(:,i) = reshape(B, [], 1);
 end
+
+training.Y = num2cell(training.Y, 1)';
+testing.Y = num2cell(testing.Y, 1)';
+training.B = num2cell(training.B, 1)';
+testing.B = num2cell(testing.B, 1)';
 
 %net = trainNetwork(training.Y,training.B,layers,options);
 %Bhat = classify(net,testing.Y);
 
-%ber = sum(sum(sum(abs(Bhat-testing.B))))/(n*TEST_SIZE*K);
+%ber = sum(abs(Bhat-testing.B))/(n*TEST_SIZE*K);
 
 %disp('BER - NN');
 %disp(mean(ber));
@@ -127,6 +137,6 @@ end
 data.training = training;
 data.testing = testing;
 
-save('data.mat','data');
+save('newdata.mat','data');
 
 
