@@ -1,5 +1,5 @@
 LEN = 1; % how many K-bit length messages we will send (per tx/rx)
-SNR = 1;
+SNR = 10;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
@@ -10,22 +10,22 @@ normAnt = 1;
 normConst = 1;
 precode = 0;
 
-TRAIN_SIZE = 200; 
-TEST_SIZE = 20;
+TRAIN_SIZE = 2^K; 
+TEST_SIZE = 2^K;
 
 training.B = zeros(n*K, TRAIN_SIZE);
-training.Y = zeros(n*(N/qamBitSize + n), TRAIN_SIZE);
+training.Y = zeros(n*(2*N/qamBitSize + 2*n), TRAIN_SIZE);
 
 size(training.B)
 size(training.Y)
 
 testing.B = zeros(n*K, TEST_SIZE);
-testing.Y = zeros(n*(N/qamBitSize + n), TEST_SIZE);
+testing.Y = zeros(n*(2*N/qamBitSize + 2*n), TEST_SIZE);
 
 addpath('./samples/polar');
 addpath('./samples/polar/functions');
 
-initPC(N,K,'AWGN',SNR);
+initPC(N,K,'AWGN',0);
 %SNR: Default: 0dB;  := Eb/N0,  where (K*Eb/N) is the energy used during BPSK modulation of coded-bits)
 
 % Create constallation table
@@ -54,6 +54,8 @@ pilotData = hadamard(n);
 Y = antennaNorm*H*pilotData + noiseVec; % Nonfading gaussian channel
 
 Hest = Y*pilotData'*inv(pilotData*pilotData');
+flatHest = [real(Hest); imag(Hest)];
+flatHest = reshape(flatHest,[],1);
 
 % Create Training data
 for (i=1:TRAIN_SIZE)
@@ -71,9 +73,9 @@ for (i=1:TRAIN_SIZE)
   % Apply channel
   Y = antennaNorm*Hest*X + noiseVec; % Nonfading gaussian channel
 
-  %Y = [real(Y); imag(Y)];
+  Y = [real(Y); imag(Y)];
 
-  training.Y(:,i) = [reshape(Y,[],1); reshape(Hest,[],1)];
+  training.Y(:,i) = [reshape(Y,[],1); flatHest];
   training.B(:,i) = reshape(B, [], 1);
 end
 
@@ -93,9 +95,9 @@ for (i=1:TEST_SIZE)
   % Apply channel
   Y = antennaNorm*H*X + noiseVec; % Nonfading gaussian channel
 
-  %Y = [real(Y); imag(Y)];
+  Y = [real(Y); imag(Y)];
 
-  testing.Y(:,i) = [reshape(Y,[],1); reshape(Hest,[],1)];
+  testing.Y(:,i) = [reshape(Y,[],1); flatHest];
   testing.B(:,i) = reshape(B, [], 1);
 end
 
