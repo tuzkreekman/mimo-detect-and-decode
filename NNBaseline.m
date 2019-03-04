@@ -6,8 +6,8 @@ R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
 qamBitSize = 1;
 qamSize = 2^qamBitSize;
-normAnt = 0;
-normConst = 0;
+normAnt = 1;
+normConst = 1;
 precode = 0;
 
 TRAIN_SIZE = 200; 
@@ -25,39 +25,6 @@ testing.Y = zeros(n*(N/qamBitSize + n), TEST_SIZE);
 addpath('./samples/polar');
 addpath('./samples/polar/functions');
 
-layers = [
-    %imageInputLayer([n N/qamBitSize 1])
-    sequenceInputLayer(n*(2*N/qamBitSize + n))
-    
-    fullyConnectedLayer(512)
-    reluLayer
-    fullyConnectedLayer(256)
-    %batchNormalizationLayer
-    reluLayer
-    fullyConnectedLayer(128)
-    %batchNormalizationLayer
-    reluLayer
-    fullyConnectedLayer(64)
-    %batchNormalizationLayer
-    reluLayer
-    fullyConnectedLayer(32)
-    %batchNormalizationLayer
-    reluLayer
-    fullyConnectedLayer(16)
-    %batchNormalizationLayer
-    reluLayer
-    fullyConnectedLayer(K)
-    softmaxLayer %should be sigmoid? 
-    classificationLayer  %maybe??
-];
-
-options =  trainingOptions('adam', ...
-    'InitialLearnRate',3e-4, ...
-    'SquaredGradientDecayFactor',0.99, ...
-    'MaxEpochs',20, ...
-    'MiniBatchSize',64, ...
-    'Plots','training-progress');
-
 initPC(N,K,'AWGN',SNR);
 %SNR: Default: 0dB;  := Eb/N0,  where (K*Eb/N) is the energy used during BPSK modulation of coded-bits)
 
@@ -74,11 +41,19 @@ H = randn(n).*exp(-1i*2*pi*rand(n,n));
 H_known = H;
 
 % Channel estimate
-B = MIMOGenerator(n, LEN, K);
-[X, newLen, enc, enc_old] = ApplyPolarQAM(B, n, LEN, N, K, R, qamBitSize, qamTab, precode, H_known);
 noiseVal = 10^(-SNR/10)*K/N;
-noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
-Hest = (H*X + noiseVec)/X; 
+noiseVec = sqrt(noiseVal)*randn(n,n); % Each symbol is received noisily
+
+antennaNorm = 1;
+if (normAnt)
+    antennaNorm = 1/sqrt(n);
+end
+
+pilotData = hadamard(n);
+% Apply channel
+Y = antennaNorm*H*pilotData + noiseVec; % Nonfading gaussian channel
+
+Hest = Y*pilotData'*inv(pilotData*pilotData');
 
 % Create Training data
 for (i=1:TRAIN_SIZE)
@@ -94,11 +69,11 @@ for (i=1:TRAIN_SIZE)
   noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
         
   % Apply channel
-  Y = Hest*X + noiseVec; % Nonfading gaussian channel
+  Y = antennaNorm*Hest*X + noiseVec; % Nonfading gaussian channel
 
-  Y = [real(Y); imag(Y)];
+  %Y = [real(Y); imag(Y)];
 
-  training.Y(:,i) = reshape([reshape(Y,[],1); reshape(Hest,[],1)], [], 1);
+  training.Y(:,i) = [reshape(Y,[],1); reshape(Hest,[],1)];
   training.B(:,i) = reshape(B, [], 1);
 end
 
@@ -116,30 +91,19 @@ for (i=1:TEST_SIZE)
   noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
         
   % Apply channel
-  Y = H*X + noiseVec; % Nonfading gaussian channel
+  Y = antennaNorm*H*X + noiseVec; % Nonfading gaussian channel
 
-  Y = [real(Y); imag(Y)];
+  %Y = [real(Y); imag(Y)];
 
-  testing.Y(:,i) = reshape([reshape(Y, [], 1); reshape(Hest, [], 1)], [], 1);
+  testing.Y(:,i) = [reshape(Y,[],1); reshape(Hest,[],1)];
   testing.B(:,i) = reshape(B, [], 1);
 end
-
-training.Y = num2cell(training.Y, 1)';
-testing.Y = num2cell(testing.Y, 1)';
-training.B = num2cell(training.B, 1)';
-testing.B = num2cell(testing.B, 1)';
-
-%net = trainNetwork(training.Y,training.B,layers,options);
-%Bhat = classify(net,testing.Y);
-
-%ber = sum(abs(Bhat-testing.B))/(n*TEST_SIZE*K);
-
-%disp('BER - NN');
-%disp(mean(ber));
 
 data.training = training;
 data.testing = testing;
 
-save('newdata.mat','data');
+save('data.mat','data');
+save('train.mat','training');
+save('test.mat','testing');
 
 
