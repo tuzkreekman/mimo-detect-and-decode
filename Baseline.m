@@ -1,13 +1,13 @@
-LEN = 2000; % how many K-bit length messages we will send (per tx/rx)
-SNR = 1;
+LEN = 200; % how many K-bit length messages we will send (per tx/rx)
+SNR = 10;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
 qamBitSize = 1;
 qamSize = 2^qamBitSize;
-normAnt = 0;
-normConst = 0;
+normAnt = 1;
+normConst = 1;
 precode = 0;
 
 addpath('./samples/polar');
@@ -38,14 +38,27 @@ B = MIMOGenerator(n, LEN, K);
 
 % Receive antenna noise - AWGN
 noiseVal = 10^(-SNR/10)*K/N;
-noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
-        
+noiseVec = sqrt(noiseVal)*randn(n,newLen+n); % Each symbol is received noisily
+
+antennaNorm = 1;
+if (normAnt)
+    antennaNorm = 1/sqrt(n);
+end
+
+pilotData = hadamard(n);
+X = [pilotData, X]; %Xpilots,Xdata
+
 % Apply channel
-Y = H*X + noiseVec; % Nonfading gaussian channel
+Y = antennaNorm*H*X + noiseVec; % Nonfading gaussian channel
+
+p = 1:n;
 
 %Hest = ChannelEstimate(rxPilots, txPilots);
 %Hest = (H*X + noiseVec)/X;
-Hest=H; % perfect CSI
+%Hest = sqrt(n)*((Y(:,p))'.*(X(:,p)))*(inv((X(:,p))'*(X(:,p))));
+Hest = sqrt(n)*Y(:,p)*X(:,p)'*inv(X(:,p)*X(:,p)');
+
+Y =  Y(:,n+1:end); % Ydata
 
 % MIMO Detect
 [Yhat,wzf,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
@@ -57,7 +70,6 @@ Hest=H; % perfect CSI
 Bhat1 = PolarDecoder(n, LEN, K, N, SNR,  zf);
 % Iterative Polar Decode - uses equalized qams
 Bhat2 = PolarDecoder(n, LEN, K, N, SNR, wzf);
-
 
 disp('MIMO Decode only BER');
 disp(sum(sum(sum(abs(enc-Yhat))))/(newLen*n));

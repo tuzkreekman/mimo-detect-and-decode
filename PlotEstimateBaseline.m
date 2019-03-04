@@ -1,4 +1,4 @@
-LEN = 4; % how many K-bit length messages we will send (per tx/rx)
+LEN = 30; % how many K-bit length messages we will send (per tx/rx)
 ITERS = 1000;
 snr = 0:10;
 n = 2; % number of tx and rx antennas
@@ -7,12 +7,15 @@ R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
 qamBitSize = 1;
 qamSize = 2^qamBitSize;
-normAnt = 0;
-normConst = 0;
+normAnt = 1;
+normConst = 1;
 precode = 0;
 
 addpath('./samples/polar');
 addpath('./samples/polar/functions');
+
+initPC(N,K,'AWGN',0); % changd snr
+%SNR: Default: 0dB;  := Eb/N0,  where (K*Eb/N) is the energy used during BPSK modulation of coded-bits)
 
 linearBER    = zeros(11,ITERS);
 iterativeBER = zeros(11,ITERS);
@@ -84,8 +87,6 @@ hold off;
 saveas(fig,'estimateBER.png');
 
 function [linearBER, polarBER] = GetBER(LEN,SNR,n,K,R,N,qamBitSize,qamSize,normAnt,normConst,precode)
-initPC(N,K,'AWGN',0); % changd snr
-%SNR: Default: 0dB;  := Eb/N0,  where (K*Eb/N) is the energy used during BPSK modulation of coded-bits)
 
 % Create constallation table
 qamTab = ConstellationTable(qamSize, normConst);
@@ -108,28 +109,26 @@ B = MIMOGenerator(n, LEN, K);
 
 % Receive antenna noise - AWGN
 noiseVal = 10^(-SNR/10);% CHANGED *K/N;
-noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
+noiseVec = sqrt(noiseVal)*randn(n,newLen+n); % Each symbol is received noisily
         
+        
+antennaNorm = 1;
+if (normAnt)
+    antennaNorm = 1/sqrt(n);
+end
+
+pilotData = hadamard(n);
+X = [pilotData, X]; %Xpilots,Xdata
+
 % Apply channel
-Y = H*X + noiseVec; % Nonfading gaussian channel
+Y = antennaNorm*H*X + noiseVec; % Nonfading gaussian channel
 
-%Hest = ChannelEstimate(rxPilots, txPilots);
-%disp('X is')
-%disp(size(X))
-%disp('Initial H is')
+p = 1:n;
+Hest = Y(:,p)*X(:,p)'*inv(X(:,p)*X(:,p)');
 
-%Hest=(Y(:,1)/X(:,1)) % perfect CSI
-%disp('Estimated H is')
-%disp('X is')
-%disp(X(:,1))
-%disp('X conjugate is')
-%disp((X(:,1))')
-%disp('part 1 is')
-%disp((Y(:,1))'.*(X(:,1)))
-%disp('part 2 is')
-%disp(inv((X(:,1))'*(X(:,1))))
-%disp('final is')
-Hest = ((Y(:,1))'.*(X(:,1)))*(inv((X(:,1))'*(X(:,1))));
+Y = Y(:,n+1:end); % Ydata
+
+
 % MIMO Detect
 [Yhat,wzf,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
 %Yhat - original polar bits it guessed
