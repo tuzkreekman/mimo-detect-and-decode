@@ -1,5 +1,5 @@
 LEN = 4; % how many K-bit length messages we will send (per tx/rx)
-ITERS = 2000;
+ITERS = 100;
 snr = 0:10;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
@@ -7,8 +7,8 @@ R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
 qamBitSize = 1;
 qamSize = 2^qamBitSize;
-normAnt = 0;
-normConst = 0;
+normAnt = 1;
+normConst = 1;
 precode = 0;
 
 addpath('./samples/polar');
