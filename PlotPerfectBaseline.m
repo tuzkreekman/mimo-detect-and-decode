@@ -111,7 +111,7 @@ noiseVal = 10^(-SNR/10);% CHANGED *K/N;
 noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
         
 % Apply channel
-Y = H*X + noiseVec; % Nonfading gaussian channel
+Y = (1/sqrt(n))* H*X + noiseVec; % Nonfading gaussian channel
 
 %Hest = ChannelEstimate(rxPilots, txPilots);
 

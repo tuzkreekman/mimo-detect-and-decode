@@ -1,7 +1,7 @@
 LEN = 1; % how many K-bit length messages we will send (per tx/rx)
 SNR = 1;
 n = 2; % number of tx and rx antennas
-K = 2; % bits per msg
+K = 16; % bits per msg
 R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
 qamBitSize = 1;
@@ -14,10 +14,13 @@ TRAIN_SIZE = 200;
 TEST_SIZE = 20;
 
 training.B = zeros(n*K, TRAIN_SIZE);
-training.Y = zeros(n*(2*N/qamBitSize + n), TRAIN_SIZE);
+training.Y = zeros(n*(N/qamBitSize + n), TRAIN_SIZE);
+
+size(training.B)
+size(training.Y)
 
 testing.B = zeros(n*K, TEST_SIZE);
-testing.Y = zeros(n*(2*N/qamBitSize + n), TEST_SIZE);
+testing.Y = zeros(n*(N/qamBitSize + n), TEST_SIZE);
 
 addpath('./samples/polar');
 addpath('./samples/polar/functions');

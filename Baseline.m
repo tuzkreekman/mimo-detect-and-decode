@@ -1,5 +1,5 @@
 LEN = 2000; % how many K-bit length messages we will send (per tx/rx)
-SNR = 1;
+SNR = 10;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
@@ -41,7 +41,7 @@ noiseVal = 10^(-SNR/10)*K/N;
 noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
         
 % Apply channel
-Y = H*X + noiseVec; % Nonfading gaussian channel
+Y = (1/sqrt(n))* H*X + noiseVec; % Nonfading gaussian channel
 
 %Hest = ChannelEstimate(rxPilots, txPilots);
 %Hest = (H*X + noiseVec)/X;
