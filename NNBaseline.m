@@ -53,7 +53,7 @@ pilotData = hadamard(n);
 % Apply channel
 Y = antennaNorm*H*pilotData + noiseVec; % Nonfading gaussian channel
 
-Hest = Y*pilotData'*inv(pilotData*pilotData');
+Hest = sqrt(n)*Y*pilotData'*inv(pilotData*pilotData');
 flatHest = [real(Hest); imag(Hest)];
 flatHest = reshape(flatHest,[],1);
 

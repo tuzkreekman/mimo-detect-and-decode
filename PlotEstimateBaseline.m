@@ -1,4 +1,4 @@
-LEN = 30; % how many K-bit length messages we will send (per tx/rx)
+LEN = 4; % how many K-bit length messages we will send (per tx/rx)
 ITERS = 1000;
 snr = 0:10;
 n = 2; % number of tx and rx antennas
@@ -80,7 +80,7 @@ title('BER vs SNR for MIMO Systems, K=16, Estimated Channel');
 ylabel('BER');
 xlabel('SNR');
 set(gca,'YScale','log');
-legend();
+legend(gca,'show');
 hold off;
 
 
@@ -124,7 +124,7 @@ X = [pilotData, X]; %Xpilots,Xdata
 Y = antennaNorm*H*X + noiseVec; % Nonfading gaussian channel
 
 p = 1:n;
-Hest = Y(:,p)*X(:,p)'*inv(X(:,p)*X(:,p)');
+Hest = sqrt(n)*Y(:,p)*X(:,p)'*inv(X(:,p)*X(:,p)');
 
 Y = Y(:,n+1:end); % Ydata
 

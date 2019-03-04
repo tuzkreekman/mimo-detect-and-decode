@@ -1,6 +1,6 @@
 LEN = 200; % how many K-bit length messages we will send (per tx/rx)
 SNR = 10;
-n = 2; % number of tx and rx antennas
+n = 8; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
