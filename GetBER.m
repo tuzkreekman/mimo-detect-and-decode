@@ -1,21 +1,4 @@
-LEN = 200; % how many K-bit length messages we will send (per tx/rx)
-SNR = 10;
-n = 8; % number of tx and rx antennas
-K = 16; % bits per msg
-R = .5; % polar rate
-N = (2^nextpow2(K))/R; % bits per coded symbol
-qamBitSize = 1;
-qamSize = 2^qamBitSize;
-normAnt = 1;
-normConst = 1;
-precode = 0;
-
-addpath('./samples/polar');
-addpath('./samples/polar/functions');
-
-
-initPC(N,K,'AWGN',SNR);
-%SNR: Default: 0dB;  := Eb/N0,  where (K*Eb/N) is the energy used during BPSK modulation of coded-bits)
+function [qamBER, linearBER, polarBER] = GetBER(LEN,SNR,n,K,R,N,qamBitSize,qamSize,normAnt,normConst,perfectKnowledge,precode)
 
 % Create constallation table
 qamTab = ConstellationTable(qamSize, normConst);
@@ -37,9 +20,10 @@ B = MIMOGenerator(n, LEN, K);
 
 
 % Receive antenna noise - AWGN
-noiseVal = 10^(-SNR/10)*K/N;
+noiseVal = 10^(-SNR/10)/n;    % scaled by 1/n so that the noise power per receiver is relative to unit power
 noiseVec = sqrt(noiseVal)*randn(n,newLen+n); % Each symbol is received noisily
-
+        
+        
 antennaNorm = 1;
 if (normAnt)
     antennaNorm = 1/sqrt(n);
@@ -52,13 +36,14 @@ X = [pilotData, X]; %Xpilots,Xdata
 Y = antennaNorm*H*X + noiseVec; % Nonfading gaussian channel
 
 p = 1:n;
+Hest = 1/antennaNorm*Y(:,p)*X(:,p)'*inv(X(:,p)*X(:,p)');
 
-%Hest = ChannelEstimate(rxPilots, txPilots);
-%Hest = (H*X + noiseVec)/X;
-%Hest = sqrt(n)*((Y(:,p))'.*(X(:,p)))*(inv((X(:,p))'*(X(:,p))));
-Hest = sqrt(n)*Y(:,p)*X(:,p)'*inv(X(:,p)*X(:,p)');
+if (perfectKnowledge)
+    Hest = H;
+end
 
-Y =  Y(:,n+1:end); % Ydata
+Y = Y(:,n+1:end); % Ydata
+
 
 % MIMO Detect
 [Yhat,wzf,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, antennaNorm);
@@ -68,16 +53,13 @@ Y =  Y(:,n+1:end); % Ydata
 
 % Linear Polar Decode - uses centered qams
 Bhat1 = PolarDecoder(n, LEN, K, N, SNR,  zf);
-% Iterative Polar Decode - uses equalized qams
+% Simple Polar Decode - uses equalized qams with noise
 Bhat2 = PolarDecoder(n, LEN, K, N, SNR, wzf);
 
-disp('MIMO Decode only BER');
-disp(sum(sum(sum(abs(enc-Yhat))))/(newLen*n));
-disp('BER - Linear');
-disp(sum(sum(sum(abs(B-Bhat1))))/(K*LEN*n));
-disp('BER - Iterative');
-disp(sum(sum(sum(abs(B-Bhat2))))/(K*LEN*n));
+qamBER = sum(sum(sum(abs(enc-Yhat))))/(newLen*n);
+linearBER = sum(sum(sum(abs(B-Bhat1))))/(K*LEN*n);
+polarBER = sum(sum(sum(abs(B-Bhat2))))/(K*LEN*n);
 
-
+end
 
 

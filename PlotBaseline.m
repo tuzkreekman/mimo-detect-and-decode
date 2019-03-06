@@ -1,5 +1,7 @@
-LEN = 10; % how many K-bit length messages we will send (per tx/rx)
-ITERS = 2000;
+global LEN ITERS snr K R N qamBitSize qamSize normAnt normConst precode
+
+LEN = 2; % how many K-bit length messages we will send (per tx/rx)
+ITERS = 10000;
 snr = 0:10;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
@@ -7,88 +9,92 @@ R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
 qamBitSize = 1;
 qamSize = 2^qamBitSize;
-normAnt = 0;
-normConst = 0;
+normAnt = 1;
+normConst = 1;
 precode = 0;
 
 addpath('./samples/polar');
 addpath('./samples/polar/functions');
 
-linearBER    = zeros(11,ITERS);
-iterativeBER = zeros(11,ITERS);
-
-for (SNR=snr)
-  for (i=1:ITERS)
-    [ber1,ber2] = GetBER(LEN,SNR,n,K,R,N,qamBitSize,qamSize,normAnt,normConst,precode);
-    linearBER(SNR+1,i) = ber1;
-    iterativeBER(SNR+1,i) = ber2;
-  end
-end
-
-linearBER = mean(linearBER,2);
-iterativeBER = mean(iterativeBER,2);
-
-fig = figure();
-hold on;
-plot(snr,linearBER,'DisplayName','Linear');
-plot(snr,iterativeBER,'DisplayName','Iterative');
-title('BER vs SNR');
-ylabel('BER');
-xlabel('SNR');
-set(gca,'YScale','log');
-legend();
-hold off;
-
-saveas(fig,'BER.png');
-
-function [linearBER, iterativeBER] = GetBER(LEN,SNR,n,K,R,N,qamBitSize,qamSize,normAnt,normConst,precode)
 initPC(N,K,'AWGN',0); % changd snr
 %SNR: Default: 0dB;  := Eb/N0,  where (K*Eb/N) is the energy used during BPSK modulation of coded-bits)
 
-% Create constallation table
-qamTab = ConstellationTable(qamSize, normConst);
+subplot(2,1,1);
+hold on;
+perfectKnowledge = 1;
 
-% Channel matrix - Gaussian
-H = randn(n).*exp(-1i*2*pi*rand(n,n));
+n=2;
+[qamBER, linearBER, polarBER] = GenerateBER(n, perfectKnowledge);
+plot(snr,linearBER,'-.r','DisplayName','2x2 Linear');
+plot(snr,polarBER,':r','DisplayName','2x2 Polar Only');
 
-% Can do precoding with full or statistical channel information for point-to-point MIMO systems
-% For now, assume TX has perfect initial channel knowledge
-% Can reach channel capacity with perfect channel knowledge and SVD precoding
-% We aren't actually precoding right now though
-H_known = H;
+n=4;
+[qamBER, linearBER, polarBER] = GenerateBER(n, perfectKnowledge);
+plot(snr,linearBER,'-.g','DisplayName','4x4 Linear');
+plot(snr,polarBER,':g','DisplayName','4x4 Polar Only');
 
-% Create MIMO data
-B = MIMOGenerator(n, LEN, K);
+n=8;
+[qamBER, linearBER, polarBER] = GenerateBER(n, perfectKnowledge);
+plot(snr,linearBER,'-.b','DisplayName','8x8 Linear');
+plot(snr,polarBER,':b','DisplayName','8x8 Polar Only');
 
-% Polar encode and modulate
-[X, newLen, enc, enc_old] = ApplyPolarQAM(B, n, LEN, N, K, R, qamBitSize, qamTab, precode, H_known);
+title('BER vs SNR for MIMO Systems, K=16, Perfect Channel Knowledge');
+ylabel('BER');
+xlabel('SNR');
+set(gca,'YScale','log');
+legend(gca,'show');
+
+subplot(2,1,2);
+perfectKnowledge = 0;
+hold on;
+
+n=2;
+[qamBER, linearBER, polarBER] = GenerateBER(n, perfectKnowledge);
+plot(snr,linearBER,'-.r','DisplayName','2x2 Linear');
+plot(snr,polarBER,':r','DisplayName','2x2 Polar Only');
+
+n=4;
+[qamBER, linearBER, polarBER] = GenerateBER(n, perfectKnowledge);
+plot(snr,linearBER,'-.g','DisplayName','4x4 Linear');
+plot(snr,polarBER,':g','DisplayName','4x4 Polar Only');
+
+n=8;
+[qamBER, linearBER, polarBER] = GenerateBER(n, perfectKnowledge);
+plot(snr,linearBER,'-.b','DisplayName','8x8 Linear');
+plot(snr,polarBER,':b','DisplayName','8x8 Polar Only');
+
+title('BER vs SNR for MIMO Systems, K=16, Estimated Channel');
+ylabel('BER');
+xlabel('SNR');
+set(gca,'YScale','log');
+legend(gca,'show');
+hold off;
 
 
-% Receive antenna noise - AWGN
-noiseVal = 10^(-SNR/10);% CHANGED *K/N;
-noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
-        
-% Apply channel
-Y = H*X + noiseVec; % Nonfading gaussian channel
-
-%Hest = ChannelEstimate(rxPilots, txPilots);
-
-Hest=H; % perfect CSI
-
-% MIMO Detect
-[Yhat,wzf,zf] = LinearMIMODecoder(n, newLen, N, Y, qamTab, Hest, normAnt);
-%Yhat - original polar bits it guessed
-%wzf - equalized qam
-%zf - recentered qam
-
-% Linear Polar Decode - uses centered qams
-Bhat1 = PolarDecoder(n, LEN, K, N, SNR,  zf);
-% Iterative Polar Decode - uses equalized qams
-Bhat2 = PolarDecoder(n, LEN, K, N, SNR, wzf);
 
 
-linearBER = sum(sum(sum(abs(B-Bhat1))))/(K*LEN*n);
-iterativeBER = sum(sum(sum(abs(B-Bhat2))))/(K*LEN*n);
+saveas(gca,'baselineBER.png');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function [qamBER,combinedBER,polarBER] = GenerateBER(n,perfectKnowledge)
+global LEN ITERS snr K R N qamBitSize qamSize normAnt normConst precode
+
+qamBER       = zeros(11,ITERS);
+combinedBER  = zeros(11,ITERS);
+polarBER     = zeros(11,ITERS);
+
+for (SNR=snr)
+  for (i=1:ITERS)
+    [ber0,ber1,ber2] = GetBER(LEN,SNR,n,K,R,N,qamBitSize,qamSize,normAnt,normConst,perfectKnowledge,precode);
+    qamBER(SNR+1,i) = ber0;
+    combinedBER(SNR+1,i) = ber1;
+    polarBER(SNR+1,i) = ber2;
+  end
 end
 
+qamBER = mean(qamBER,2);
+combinedBER = mean(combinedBER,2);
+polarBER = mean(polarBER,2);
+
+end

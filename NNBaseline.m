@@ -1,6 +1,6 @@
 LEN = 1; % how many K-bit length messages we will send (per tx/rx)
 SNR = 10;
-n = 2; % number of tx and rx antennas
+n = 8; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
@@ -53,7 +53,7 @@ pilotData = hadamard(n);
 % Apply channel
 Y = antennaNorm*H*pilotData + noiseVec; % Nonfading gaussian channel
 
-Hest = sqrt(n)*Y*pilotData'*inv(pilotData*pilotData');
+Hest = 1/antennaNorm*Y*pilotData'*inv(pilotData*pilotData');
 flatHest = [real(Hest); imag(Hest)];
 flatHest = reshape(flatHest,[],1);
 
