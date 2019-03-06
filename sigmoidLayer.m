@@ -1,4 +1,4 @@
-classdef sigmoidLayer < nnet.layer.Layer %nnet.cnn.layer.SoftmaxLayer
+classdef sigmoidLayer < nnet.layer.Layer
     properties 
     end
 

@@ -1,7 +1,7 @@
 TRAIN_SIZE = 1024;
 TEST_SIZE = 1024;
-INPUT_SIZE = 20;
-OUTPUT_SIZE = 6;
+INPUT_SIZE = 134;
+OUTPUT_SIZE = 16;
 
 training.Y = randi([0, 1], INPUT_SIZE, 1, 1, TRAIN_SIZE);
 training.B = training.Y(1:OUTPUT_SIZE, :,:,:);
@@ -44,4 +44,4 @@ options =  trainingOptions('adam', ...
 net = trainNetwork(training.Y,training.B,layers,options);
 Bhat = predict(net,testing.Y);
 
-disp(mean(mean(abs(squeeze(Bhat) - squeeze(testing.B)'))));
+disp(mean(mean(abs(squeeze(Bhat>.5) - squeeze(testing.B)'))));
