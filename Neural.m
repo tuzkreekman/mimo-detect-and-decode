@@ -10,7 +10,7 @@ normAnt = 1;
 normConst = 1;
 precode = 0;
 
-TRAIN_SIZE = 1024; %2^K; 
+TRAIN_SIZE = 2^K; 
 TEST_SIZE = 1024; %2^K;
 INPUT_SIZE = 2*n*(N/qamBitSize + n);
 OUTPUT_SIZE = K;
@@ -129,20 +129,18 @@ layers = [
     reluLayer
     fullyConnectedLayer(OUTPUT_SIZE)
     sigmoidLayer
-    bitClassificationLayer
+    sigmoidClassificationLayer
 ];
 
 
 options =  trainingOptions('adam', ...
-    'InitialLearnRate',3e-4, ...
-    'MaxEpochs',200, ...
+    'InitialLearnRate',3e-3, ...
+    'MaxEpochs',1, ...
     'MiniBatchSize',64, ...
     'Plots','training-progress');
 
 training.B = training.B(1:K,:);
 testing.B = testing.B(1:K,:);
-training.Y(1:K,:) = training.B;
-testing.Y(1:K,:) = testing.B;
 
 training.B = reshape(training.B, 1, 1, K, TRAIN_SIZE);
 testing.B = reshape(testing.B, 1, 1, K, TEST_SIZE);
@@ -151,6 +149,7 @@ testing.Y = reshape(testing.Y, INPUT_SIZE, 1, 1, TEST_SIZE);
 
 net = trainNetwork(training.Y,training.B,layers,options);
 Bhat = predict(net,testing.Y);
+%Bhat = 1./(1+exp(-Bhat));
 
 disp(mean(mean(abs(squeeze(Bhat>.5) - squeeze(testing.B)'))));
 

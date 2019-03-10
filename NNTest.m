@@ -32,7 +32,8 @@ layers = [
     reluLayer
     fullyConnectedLayer(OUTPUT_SIZE)
     sigmoidLayer
-    bitClassificationLayer
+%    bitClassificationLayer
+    sigmoidClassificationLayer
 ];
 
 options =  trainingOptions('adam', ...
@@ -43,5 +44,7 @@ options =  trainingOptions('adam', ...
 
 net = trainNetwork(training.Y,training.B,layers,options);
 Bhat = predict(net,testing.Y);
+
+%Bhat = 1./(1+exp(-Bhat));
 
 disp(mean(mean(abs(squeeze(Bhat>.5) - squeeze(testing.B)'))));
