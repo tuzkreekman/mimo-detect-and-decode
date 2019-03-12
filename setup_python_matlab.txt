@@ -1,0 +1,17 @@
+# Log into GPU 
+srun --pty --partition=gpu --gres=gpu:1 --qos=interactive $SHELL -l
+
+# Oat GPU setup instructions
+cd /farmshare/software/non-free/MATLAB-R2018b/extern/engines/python
+python setup.py build --build-base="/home/zainabk/matlab_python_build" install --user
+pip install --user tensorflow
+
+# Basic test in Python
+n = 2
+LEN = 1
+K = 16
+import matlab.engine 
+eng = matlab.engine.start_matlab()
+eng.MIMOGenerator(n,LEN,K)
+
+
