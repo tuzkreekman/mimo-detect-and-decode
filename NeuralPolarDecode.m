@@ -1,7 +1,7 @@
 global H Hest flatHest TRAIN_SIZE TEST_SIZE SNR n K R N INPUT_SIZE qamTab antennaNorm options
 
 SNR = 10;
-n = 2; % number of tx and rx antennas
+n = 8; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
@@ -11,8 +11,8 @@ normAnt = 1;
 normConst = 1;
 precode = 0;
 
-TRAIN_SIZE = 256; 
-TEST_SIZE = 1024; 
+TRAIN_SIZE = 2^K; 
+TEST_SIZE = 2^(K-4); 
 
 INPUT_SIZE = 2*n*(N/qamBitSize + n);
 OUTPUT_SIZE = K;
@@ -82,36 +82,39 @@ snr = 30;
 
 net = TrainEpoch(layers);
 
-for i=1:(10^4)
+for i=1:1
     layers = net.Layers;
     net = TrainEpoch(layers);
 end
-
+%{
 SNR = 8;
 
-for i=1:(2*10^4)
+for i=1:1
     layers = net.Layers;
     net = TrainEpoch(layers);
 end
 
 SNR = 6;
 
-for i=1:(2*10^4)
+for i=1:1
     layers = net.Layers;
     net = TrainEpoch(layers);
 end
 
-
+%}
 function [net] = TrainEpoch(layers)
 global H Hest flatHest TRAIN_SIZE TEST_SIZE SNR n K R N INPUT_SIZE qamTab antennaNorm options
 
+disp('Training begins')
+
 training = GenerateData(Hest,flatHest,TRAIN_SIZE,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm);
+disp('Testing begins')
 testing = GenerateData(H,flatHest,TEST_SIZE,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm);
 
 net = trainNetwork(training.Y,training.B,layers,options);
 Bhat = predict(net,testing.Y);
 %Bhat = 1./(1+exp(-Bhat));
-
+disp('We print here')
 disp(mean(mean(abs(squeeze(Bhat>.5) - squeeze(testing.B)'))));
 end
 
@@ -133,11 +136,17 @@ Y = [real(Y); imag(Y)];
 
 Y = [reshape(Y,[],LEN); repmat(flatHest,1,LEN)];
 B = reshape(B,[],LEN);
+disp('size of Y is')
 
 data.Y = reshape(Y, INPUT_SIZE, 1, 1, LEN);
+disp(size(Y))
+disp('size of B is')
 data.B = reshape(B(1:K,:), 1, 1, K, LEN);
+disp(size(B))
+
 end
 
+save("trainedNet.mat","net")
 
 
 
