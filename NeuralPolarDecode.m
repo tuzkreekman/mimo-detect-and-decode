@@ -1,7 +1,7 @@
 global H Hest flatHest TRAIN_SIZE TEST_SIZE SNR n K R N INPUT_SIZE qamTab antennaNorm options
 
 SNR = 10;
-n = 2; % number of tx and rx antennas
+n = 4; % number of tx and rx antennas
 K = 16; % bits per msg
 R = .5; % polar rate
 N = (2^nextpow2(K))/R; % bits per coded symbol
@@ -11,7 +11,7 @@ normAnt = 1;
 normConst = 1;
 precode = 0;
 
-TRAIN_SIZE = 256; 
+TRAIN_SIZE = 2^K;
 TEST_SIZE = 1024; 
 
 INPUT_SIZE = 2*n*(N/qamBitSize + n);
@@ -27,8 +27,8 @@ initPC(N,K,'AWGN',0);
 qamTab = ConstellationTable(qamSize, normConst);
 
 % Channel matrix - Gaussian
-H = eye(n);
-%H = randn(n).*exp(-1i*2*pi*rand(n,n));
+%H = eye(n);
+H = randn(n).*exp(-1i*2*pi*rand(n,n));
 
 % Channel estimate setup
 noiseVal = 10^(-SNR/10)*K/N;
@@ -44,27 +44,27 @@ pilotData = hadamard(n);
 % Apply channel
 Y = antennaNorm*H*pilotData + noiseVec; % Nonfading gaussian channel
 %Hest = 1/antennaNorm*Y*pilotData'*inv(pilotData*pilotData');
-Hest = H;
+Hest = H; %perfect channel knowledge
 flatHest = [real(Hest); imag(Hest)];
 flatHest = reshape(flatHest,[],1);
 
 layers = [
     imageInputLayer([INPUT_SIZE 1 1])
 
-    fullyConnectedLayer(300)
+    fullyConnectedLayer(512)
     reluLayer
-    fullyConnectedLayer(300)
+    fullyConnectedLayer(256)
     batchNormalizationLayer
     reluLayer
-    fullyConnectedLayer(300)
+    fullyConnectedLayer(128)
     batchNormalizationLayer
     reluLayer
-    fullyConnectedLayer(300)
+    fullyConnectedLayer(64)
     reluLayer
-    fullyConnectedLayer(300)
+    fullyConnectedLayer(32)
     batchNormalizationLayer
     reluLayer
-    fullyConnectedLayer(300)
+    fullyConnectedLayer(16)
     batchNormalizationLayer
     reluLayer
     fullyConnectedLayer(OUTPUT_SIZE)
@@ -73,12 +73,13 @@ layers = [
 ];
 
 
-options =  trainingOptions('adam', ...
-    'InitialLearnRate',3e-3, ...
+options =  trainingOptions('sgdm', ...
     'MaxEpochs',1, ...
+    'Verbose',false, ...
+    'Plots','none',...
     'MiniBatchSize',64);
 
-snr = 30;
+SNR = 30;
 
 net = TrainEpoch(layers);
 
@@ -86,6 +87,7 @@ for i=1:(10^4)
     layers = net.Layers;
     net = TrainEpoch(layers);
 end
+disp('first 10000');
 
 SNR = 8;
 
@@ -93,8 +95,8 @@ for i=1:(2*10^4)
     layers = net.Layers;
     net = TrainEpoch(layers);
 end
-
-SNR = 6;
+disp('next 20000');
+SNR = 0;
 
 for i=1:(2*10^4)
     layers = net.Layers;
@@ -102,11 +104,14 @@ for i=1:(2*10^4)
 end
 
 
+save ('polar_decoder.mat','net')
+
+
 function [net] = TrainEpoch(layers)
 global H Hest flatHest TRAIN_SIZE TEST_SIZE SNR n K R N INPUT_SIZE qamTab antennaNorm options
 
-training = GenerateData(Hest,flatHest,TRAIN_SIZE,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm);
-testing = GenerateData(H,flatHest,TEST_SIZE,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm);
+training = GenerateData(Hest,Hest,flatHest,TRAIN_SIZE,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm);
+testing = GenerateData(H,Hest,flatHest,TEST_SIZE,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm);
 
 net = trainNetwork(training.Y,training.B,layers,options);
 Bhat = predict(net,testing.Y);
@@ -115,7 +120,7 @@ Bhat = predict(net,testing.Y);
 disp(mean(mean(abs(squeeze(Bhat>.5) - squeeze(testing.B)'))));
 end
 
-function [data] = GenerateData(H,flatHest,LEN,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm)
+function [data] = GenerateData(H,Hest,flatHest,LEN,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm)
 % Create MIMO data
 B = MIMOGenerator(n, LEN, K);
 
@@ -128,6 +133,9 @@ noiseVec = sqrt(noiseVal)*randn(n,newLen); % Each symbol is received noisily
         
 % Apply channel
 Y = antennaNorm*H*X + noiseVec; % Nonfading gaussian channel
+
+% CHannel equalize
+Y = pinv(Hest)*Y;
 
 Y = [real(Y); imag(Y)];
 
