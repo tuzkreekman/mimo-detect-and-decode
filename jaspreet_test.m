@@ -130,10 +130,10 @@ end
 
 function [data] = GenerateData(H,flatHest,LEN,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm)
 % Create MIMO data
-B = MIMOGenerator(n, LEN, K);
+B = ParMIMOGenerator(n, LEN, K);
 
 % Polar encode and modulate
-[X, newLen, enc, enc_old] = ApplyPolarQAM(B, n, LEN, N, K, R, qamTab.qamBitSize, qamTab, 0, 0);
+[X, newLen, enc, enc_old] = ParPolarQAM(B, n, LEN, N, K, R, qamTab.qamBitSize, qamTab, 0, 0);
 
 % Receive antenna noise - AWGN
 noiseVal = 10^(-SNR/10)/n;    % scaled by 1/n so that the noise power per receiver is relative to unit power
