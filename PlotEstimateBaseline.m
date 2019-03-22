@@ -1,5 +1,5 @@
 LEN = 4; % how many K-bit length messages we will send (per tx/rx)
-ITERS = 100;
+ITERS = 1000;
 snr = 0:10;
 n = 2; % number of tx and rx antennas
 K = 16; % bits per msg
