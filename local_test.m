@@ -1,4 +1,4 @@
-global H Hest flatHest TRAIN_SIZE TEST_SIZE SNR n K R N INPUT_SIZE qamTab antennaNorm options
+global H Hest flatHest TRAIN_SIZE TEST_SIZE SNR n K R N INPUT_SIZE qamTab antennaNorm options BER
 
 SNR = 30;
 n = 2; % number of tx and rx antennas
@@ -7,6 +7,7 @@ K = 4
 R = .5; % polar rate
 %N = 32
 disp('N is')
+BER = [];
 N = (2^nextpow2(K))/R; % bits per coded symbol
 qamBitSize = 1;
 qamSize = 2^qamBitSize;
@@ -87,18 +88,24 @@ options =  trainingOptions('adam', ...
 
 %disp('Lr is')
 lr = 3e-3;
-snr = 10;
-
+SNR = 0;
+snr = 0
 net = TrainEpoch(layers);
-
+%BER = [];
 for i=1:1000
     lr = lr*0.99;
     disp('iter is')
     disp(i)
+    %disp('b is')
+    b = mod(i,100);
+    if b == 0
+        snr = snr+1;
+        disp('new snr')
+        SNR = snr
+    end
     %options.InitialLearnRate = lr
     options =  trainingOptions('adam', ...
     'InitialLearnRate',lr, ...
-    'GradientDecayFactor',0.99,...
     'MaxEpochs',1, ...
     'MiniBatchSize',64);
     for j = 1:1
@@ -106,7 +113,6 @@ for i=1:1000
     %disp(i*j)
     options =  trainingOptions('adam', ...
     'InitialLearnRate',lr, ...
-    'GradientDecayFactor',0.99,...
     'MaxEpochs',100, ...
     'MiniBatchSize',64);
    % disp('i is')
@@ -116,7 +122,11 @@ for i=1:1000
     end
 end
 
-save("trainedNet_test.mat","net")
+disp('BER is')
+disp(BER)
+save("BER.mat","BER")
+%disp('BER is')
+%disp(BER)
 %{
 SNR = 8;
 
@@ -134,7 +144,7 @@ end
 
 %}
 function [net] = TrainEpoch(layers)
-global H Hest flatHest TRAIN_SIZE TEST_SIZE SNR n K R N INPUT_SIZE qamTab antennaNorm options
+global H Hest flatHest TRAIN_SIZE TEST_SIZE SNR n K R N INPUT_SIZE qamTab antennaNorm options BER
 
 disp('Training begins')
 
@@ -148,7 +158,10 @@ Bhat = predict(net,testing.Y);
 Bhat = 1./(1+exp(-Bhat));
 disp('We print here')
 disp(squeeze(Bhat>.5))
-disp(mean(mean(abs(squeeze(Bhat>.5) - squeeze(testing.B)'))));
+A = (mean(mean(abs(squeeze(Bhat>.5) - squeeze(testing.B)'))))
+%disp('BER is')
+BER = [BER ; A];
+
 end
 
 function [data] = GenerateData(H,flatHest,LEN,SNR,n,K,R,N,INPUT_SIZE,qamTab,antennaNorm)
